@@ -1,0 +1,94 @@
+@page
+@model EnrollmentSystemAPI.Pages.Student.UploadFeeSlipModel
+@{
+    ViewData["Title"]        = "Upload Fee Slip";
+    ViewData["TopbarTitle"]  = "Upload Fee Slip";
+    ViewData["StudentName"]  = Model.StudentName;
+    Layout = "_AppLayout";
+}
+
+<div class="page-header">
+  <h1>Upload Fee Slip</h1>
+  <p>Upload your paid challan for verification. Only verified fee slips allow enrollment form submission.</p>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+  <div class="alert alert-danger show">@Model.ErrorMessage</div>
+}
+
+<div class="card">
+  <form method="post" enctype="multipart/form-data" class="validated-form" id="uploadForm" novalidate>
+    @Html.AntiForgeryToken()
+
+    <!-- Drop Zone -->
+    <div class="upload-area" id="uploadArea">
+      <div class="upload-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="16 16 12 12 8 16"/>
+          <line x1="12" y1="12" x2="12" y2="21"/>
+          <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/>
+        </svg>
+      </div>
+      <h3>Drop your fee slip here, or click to browse</h3>
+      <p>Supports: PDF, JPG, PNG (Max 5MB)</p>
+      <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('fileInput').click()">
+        Select File
+      </button>
+      <input type="file" id="fileInput" name="FeeSlipFile" accept=".pdf,.jpg,.jpeg,.png" />
+    </div>
+
+    <!-- Transaction ID -->
+    <div class="form-group" style="margin-top:24px">
+      <label class="form-label" for="TransactionId">Transaction ID (Optional)</label>
+      <input type="text"
+             id="TransactionId"
+             name="TransactionId"
+             class="form-control"
+             placeholder="Enter transaction ID from challan"
+             value="@Model.TransactionId"
+             data-pattern="^[A-Za-z0-9\-]{0,30}$"
+             data-pattern-msg="Transaction ID can only contain letters, numbers, and hyphens." />
+      <span class="field-error"></span>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:5px">
+        Providing transaction ID helps speed up verification
+      </p>
+    </div>
+
+    <!-- Instructions -->
+    <div class="upload-instructions">
+      <h4>Upload Instructions:</h4>
+      <ul>
+        <li>Ensure the challan is clearly visible and readable</li>
+        <li>Amount and date should be clearly shown</li>
+        <li>Bank stamp must be visible (if applicable)</li>
+        <li>File should not be blurry or rotated</li>
+      </ul>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:24px">
+      <button type="submit" class="btn btn-primary" style="width:auto;padding:0 32px">
+        Upload Fee Slip
+      </button>
+    </div>
+
+  </form>
+</div>
+
+@section Scripts {
+<script>
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+  const fileInput = document.getElementById('fileInput');
+  if (!fileInput.files.length) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    // Show inline error
+    const area = document.getElementById('uploadArea');
+    area.style.borderColor = 'var(--color-danger)';
+    area.querySelector('p').textContent = 'Please select a file before uploading.';
+    area.querySelector('p').style.color = 'var(--color-danger)';
+    if (window.Toast) Toast.error('Please select a fee slip file to upload.');
+  }
+});
+</script>
+}

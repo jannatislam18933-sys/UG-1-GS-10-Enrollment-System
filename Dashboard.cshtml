@@ -1,156 +1,109 @@
 @page
-@model EnrollmentSystemAPI.Pages.Clerk.ClerkDashboardModel
+@model EnrollmentSystemAPI.Pages.Student.DashboardModel
 @{
-    ViewData["Title"]       = "Dashboard";
-    ViewData["TopbarTitle"] = "Dashboard";
-    ViewData["ClerkName"]   = Model.ClerkName;
-    Layout = "_ClerkLayout";
+    ViewData["Title"]        = "Dashboard";
+    ViewData["TopbarTitle"]  = "Dashboard";
+    ViewData["StudentName"]  = Model.StudentName;
+    Layout = "_AppLayout";
 }
 
+<!-- Status Cards -->
 <div class="page-header">
-    <h1>Dashboard</h1>
-    <p>Welcome back, @Model.ClerkName — here's today's overview</p>
+  <h1>Dashboard</h1>
+  <p>Welcome back, @Model.StudentName</p>
 </div>
 
-@* ── Stat Cards ───────────────────────────────────────────── *@
-<div class="stat-grid">
-    <div class="stat-card">
-        <div class="stat-icon blue">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
-            </svg>
-        </div>
-        <div class="stat-body">
-            <div class="stat-value">24</div>
-            <div class="stat-label">Pending Verifications</div>
-            <div class="stat-delta up">↑ 3 since yesterday</div>
-        </div>
+<div class="status-grid">
+
+  <!-- Spring 2026 -->
+  <div class="status-card">
+    <span class="status-badge badge-open">Open</span>
+    <div class="status-card-icon blue">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
     </div>
-    <div class="stat-card">
-        <div class="stat-icon orange">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12 6 12 12 16 14"/>
-            </svg>
-        </div>
-        <div class="stat-body">
-            <div class="stat-value">18</div>
-            <div class="stat-label">Waiting Enrollments</div>
-            <div class="stat-delta neutral">No change</div>
-        </div>
+    <h3>Spring 2026</h3>
+    <p>Current Enrollment Cycle</p>
+  </div>
+
+  <!-- Fee Verification -->
+  <div class="status-card">
+    <span class="status-badge badge-pending">Pending</span>
+    <div class="status-card-icon orange">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
     </div>
-    <div class="stat-card">
-        <div class="stat-icon green">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="20 6 9 17 4 12"/>
-            </svg>
-        </div>
-        <div class="stat-body">
-            <div class="stat-value">86</div>
-            <div class="stat-label">Approved This Week</div>
-            <div class="stat-delta up">↑ 12% vs last week</div>
-        </div>
+    <h3>Fee Verification</h3>
+    <p>Upload your fee slip</p>
+  </div>
+
+  <!-- Enrollment Form -->
+  <div class="status-card">
+    <span class="status-badge badge-not-started">Not Started</span>
+    <div class="status-card-icon red">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+      </svg>
     </div>
-    <div class="stat-card">
-        <div class="stat-icon red">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="15" y1="9" x2="9" y2="15"/>
-                <line x1="9"  y1="9" x2="15" y2="15"/>
-            </svg>
-        </div>
-        <div class="stat-body">
-            <div class="stat-value">12</div>
-            <div class="stat-label">Rejected This Week</div>
-            <div class="stat-delta down">↓ 4 vs last week</div>
-        </div>
-    </div>
+    <h3>Enrollment Form</h3>
+    <p>Complete after fee verification</p>
+  </div>
+
 </div>
 
-@* ── Quick Actions + Chart ─────────────────────────────────── *@
-<div class="dash-grid">
-    <div class="card">
-        <div class="card-title">Quick Actions</div>
-        <div class="quick-action-item">
-            <div class="quick-action-left">
-                <div class="quick-action-icon" style="background:#EFF6FF;color:#2563EB">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                        <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                    </svg>
-                </div>
-                <div>
-                    <h4>Verify Fee Slips</h4>
-                    <p>24 submissions pending review</p>
-                </div>
-            </div>
-            <a href="/Clerk/FeeVerification" class="btn btn-primary btn-sm" style="width:auto">Review</a>
-        </div>
-        <div class="quick-action-item">
-            <div class="quick-action-left">
-                <div class="quick-action-icon" style="background:#DCFCE7;color:#16A34A">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                    </svg>
-                </div>
-                <div>
-                    <h4>Review Enrollments</h4>
-                    <p>18 enrollment forms to review</p>
-                </div>
-            </div>
-            <a href="/Clerk/EnrollmentReview" class="btn btn-outline btn-sm" style="width:auto">Review</a>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-title">Weekly Performance</div>
-        <div class="chart-wrap" style="height:170px">
-            <canvas id="weeklyChart"></canvas>
-        </div>
-    </div>
-</div>
-
-@* ── Recent Activity ──────────────────────────────────────── *@
+<!-- Quick Actions -->
 <div class="card">
-    <div class="card-title">Recent Activity</div>
-    <div class="activity-list">
-        @foreach (var a in Model.RecentActivity)
-        {
-            <div class="activity-item">
-                <div class="activity-avatar">@a.Name[0]</div>
-                <div class="activity-body">
-                    <div class="activity-name">@a.Name</div>
-                    <div class="activity-detail">@a.Action</div>
-                </div>
-                <div class="activity-time">@a.TimeAgo</div>
-            </div>
-        }
+  <div class="card-title">Quick Actions</div>
+
+  <div class="quick-action-item">
+    <div class="quick-action-left">
+      <div class="quick-action-icon blue" style="background:#EFF6FF;color:#2563EB">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </div>
+      <div>
+        <h4>Upload Fee Slip</h4>
+        <p>Submit your paid challan for verification</p>
+      </div>
     </div>
+    <a href="/Student/UploadFeeSlip" class="btn btn-primary btn-sm">Upload Now</a>
+  </div>
+
+  <div class="quick-action-item">
+    <div class="quick-action-left">
+      <div class="quick-action-icon" style="background:#F3F4F6;color:#9CA3AF">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+        </svg>
+      </div>
+      <div>
+        <h4>Submit Enrollment Form</h4>
+        <p>Available after fee verification</p>
+      </div>
+    </div>
+    <button class="btn btn-sm badge-locked" disabled
+            style="background:#F3F4F6;color:#6B7280;border:none;height:34px;padding:0 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:not-allowed">
+      🔒 Locked
+    </button>
+  </div>
 </div>
 
-@section Scripts {
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script>
-new Chart(document.getElementById('weeklyChart'), {
-  type: 'bar',
-  data: {
-    labels: ['Mon','Tue','Wed','Thu','Fri','Sat'],
-    datasets: [
-      { label:'Verified', data:[14,18,12,20,16,6],  backgroundColor:'#16A34A', borderRadius:4 },
-      { label:'Rejected', data:[2,3,1,4,2,0],        backgroundColor:'#EF4444', borderRadius:4 }
-    ]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend:{ position:'bottom', labels:{ boxWidth:10, font:{ size:11 } } } },
-    scales: {
-      x: { grid:{ display:false }, ticks:{ font:{ size:11 } } },
-      y: { beginAtZero:true, grid:{ color:'#F3F4F6' }, ticks:{ font:{ size:11 } } }
-    }
-  }
-});
-</script>
-}
+<!-- Important Information -->
+<div class="info-box">
+  <h4>Important Information</h4>
+  <ul>
+    <li>Enrollment deadline: April 30, 2026</li>
+    <li>Fee verification typically takes 24–48 hours</li>
+    <li>You cannot submit enrollment form without verified fee slip</li>
+  </ul>
+</div>

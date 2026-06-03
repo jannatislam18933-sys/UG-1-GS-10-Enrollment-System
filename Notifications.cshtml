@@ -1,0 +1,230 @@
+@page
+@model EnrollmentSystemAPI.Pages.Student.NotificationsModel
+@{
+    ViewData["Title"]       = "Notifications";
+    ViewData["TopbarTitle"] = "Notifications";
+    ViewData["StudentName"] = Model.StudentName;
+    Layout = "_AppLayout";
+}
+
+<div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+        <h1>Notifications</h1>
+        <p>All notices and updates from the university</p>
+    </div>
+    <button class="btn btn-outline btn-sm" id="markAllReadBtn" style="width:auto;margin-top:4px">
+        Mark all as read
+    </button>
+</div>
+
+@* ── Filter tabs ──────────────────────────────────────────── *@
+<div class="notif-tabs">
+    <button class="notif-tab active" data-filter="all">All</button>
+    <button class="notif-tab" data-filter="unread">Unread <span class="notif-tab-count" id="unreadCount">0</span></button>
+    <button class="notif-tab" data-filter="info">General</button>
+    <button class="notif-tab" data-filter="warning">Reminders</button>
+    <button class="notif-tab" data-filter="success">Updates</button>
+</div>
+
+@* ── Notices list ─────────────────────────────────────────── *@
+<div class="card" style="padding:0;overflow:hidden">
+    <div id="noticeList">
+        <div style="display:flex;align-items:center;gap:12px;padding:32px;justify-content:center;color:var(--text-secondary);font-size:13px">
+            <div class="notif-spinner"></div>
+            Loading notices…
+        </div>
+    </div>
+</div>
+
+@* ── Empty state (hidden by default) ─────────────────────── *@
+<div id="emptyState" style="display:none;text-align:center;padding:60px 24px">
+    <div style="font-size:48px;margin-bottom:12px">🔔</div>
+    <h3 style="font-size:16px;font-weight:600;margin-bottom:6px">No notices</h3>
+    <p style="font-size:13px;color:var(--text-secondary)">You're all caught up! Check back later for updates.</p>
+</div>
+
+@section Scripts {
+<style>
+/* Tabs */
+.notif-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.notif-tab{
+  padding:7px 16px;border-radius:999px;border:1.5px solid var(--border-color);
+  background:#fff;font-size:13px;font-weight:500;color:var(--text-secondary);
+  cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;
+}
+.notif-tab:hover{border-color:var(--color-primary);color:var(--color-primary)}
+.notif-tab.active{background:var(--color-primary);border-color:var(--color-primary);color:#fff}
+.notif-tab-count{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:18px;height:18px;padding:0 5px;
+  background:rgba(255,255,255,0.25);border-radius:999px;font-size:11px;
+}
+.notif-tab:not(.active) .notif-tab-count{background:var(--color-danger);color:#fff}
+
+/* Notice item */
+.notice-item{
+  display:flex;align-items:flex-start;gap:14px;padding:16px 20px;
+  border-bottom:1px solid var(--border-color);transition:background .15s;
+  position:relative;cursor:pointer;
+}
+.notice-item:last-child{border-bottom:none}
+.notice-item:hover{background:#F9FAFB}
+.notice-item.unread{background:#F5F9FF}
+.notice-item.unread::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--color-primary);border-radius:0 2px 2px 0;
+}
+.notice-icon{
+  width:42px;height:42px;border-radius:11px;display:flex;align-items:center;
+  justify-content:center;font-size:20px;flex-shrink:0;
+}
+.notice-icon.blue  {background:#EFF6FF}
+.notice-icon.orange{background:#FEF3C7}
+.notice-icon.green {background:#DCFCE7}
+.notice-icon.red   {background:#FEE2E2}
+.notice-icon.purple{background:#EDE9FE}
+.notice-body{flex:1;min-width:0}
+.notice-title{font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.notice-msg{font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:6px}
+.notice-time{font-size:11px;color:var(--text-muted)}
+.unread-badge{display:inline-block;width:8px;height:8px;background:var(--color-primary);border-radius:50%;flex-shrink:0}
+.notice-actions{display:flex;gap:8px;margin-top:8px}
+.notice-action-btn{
+  padding:4px 12px;font-size:12px;font-weight:500;border-radius:6px;border:1.5px solid var(--border-color);
+  background:#fff;color:var(--text-secondary);cursor:pointer;transition:all .15s;
+}
+.notice-action-btn:hover{border-color:var(--color-primary);color:var(--color-primary)}
+.notice-action-btn.primary{background:var(--color-primary);border-color:var(--color-primary);color:#fff}
+.notice-action-btn.primary:hover{background:var(--color-primary-hover)}
+
+@@media(max-width:480px){
+  .notice-item{padding:13px 14px;gap:10px}
+  .notice-icon{width:36px;height:36px;font-size:17px}
+}
+</style>
+<script>
+const DEMO_NOTICES = [
+  { id:'1', icon:'📋', cls:'blue',   type:'info',    title:'Enrollment Open for Spring 2026',        message:'The enrollment window for Spring 2026 semester is now open. Please complete your form and submit your fee slip before the deadline of April 30, 2026.',         time:'2 hours ago',  isRead:false },
+  { id:'2', icon:'💰', cls:'orange', type:'warning', title:'Fee Submission Deadline Reminder',       message:'This is a reminder that the fee submission deadline is approaching. Submit your paid challan through the enrollment form to avoid late penalties.',           time:'1 day ago',    isRead:false },
+  { id:'3', icon:'✅', cls:'green',  type:'success', title:'Enrollment Form Received',               message:'Your enrollment form for Spring 2026 semester has been received and is under review by the clerk. You will be notified once it is approved.',               time:'3 days ago',   isRead:false },
+  { id:'4', icon:'📢', cls:'blue',   type:'info',    title:'University Notice — Schedule Update',    message:'Classes for Spring 2026 will resume on February 3rd. Please check the official timetable on the university portal for your updated class schedule.',         time:'5 days ago',   isRead:true  },
+  { id:'5', icon:'⚠️', cls:'orange', type:'warning', title:'Document Verification Required',         message:'The administration requires you to visit the academic office with original documents before January 25th for final enrollment confirmation.',                  time:'1 week ago',   isRead:true  },
+  { id:'6', icon:'🎓', cls:'purple', type:'info',    title:'Semester Result Published',               message:'Results for Fall 2025 semester have been published. You can view your result card from the examination portal or visit the examination branch.',              time:'2 weeks ago',  isRead:true  },
+  { id:'7', icon:'📅', cls:'blue',   type:'info',    title:'Academic Calendar 2026 Released',        message:'The academic calendar for 2026 has been released. Important dates include mid-term exams in March, final exams in May, and summer break from June 15.',      time:'3 weeks ago',  isRead:true  },
+];
+
+let allNotices = [];
+let currentFilter = 'all';
+
+async function loadNotices() {
+  try {
+    const res = await fetch('/api/notices', { headers:{ 'Accept':'application/json' } });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    // Normalize API shape to our internal format
+    allNotices = data.map(n => ({
+      id:      n.id || n.Id,
+      icon:    getIcon(n.type || n.Type),
+      cls:     getCls(n.type  || n.Type),
+      type:    (n.type || n.Type || 'info').toLowerCase(),
+      title:   n.title   || n.Title   || '',
+      message: n.message || n.Message || n.body || n.Body || '',
+      time:    formatTime(n.createdAt || n.CreatedAt),
+      isRead:  n.isRead  ?? n.IsRead  ?? false,
+    }));
+  } catch {
+    allNotices = DEMO_NOTICES;
+  }
+  renderAll();
+}
+
+function renderAll() {
+  const filtered = allNotices.filter(n => {
+    if (currentFilter === 'unread')  return !n.isRead;
+    if (currentFilter === 'info')    return n.type === 'info' || n.type === 'announcement';
+    if (currentFilter === 'warning') return n.type === 'warning';
+    if (currentFilter === 'success') return n.type === 'success';
+    return true;
+  });
+
+  const list = document.getElementById('noticeList');
+  const empty = document.getElementById('emptyState');
+  const unreadCount = allNotices.filter(n => !n.isRead).length;
+  const countEl = document.getElementById('unreadCount');
+  if (countEl) countEl.textContent = unreadCount;
+
+  if (filtered.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  list.innerHTML = filtered.map(n => `
+    <div class="notice-item ${n.isRead ? '' : 'unread'}" data-id="${n.id}" data-type="${n.type}">
+      <div class="notice-icon ${n.cls}">${n.icon}</div>
+      <div class="notice-body">
+        <div class="notice-title">
+          ${escHtml(n.title)}
+          ${!n.isRead ? '<span class="unread-badge"></span>' : ''}
+        </div>
+        <div class="notice-msg">${escHtml(n.message)}</div>
+        <div class="notice-time">${n.time}</div>
+        ${!n.isRead ? `<div class="notice-actions"><button class="notice-action-btn primary" onclick="markRead('${n.id}',event)">Mark as read</button></div>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+async function markRead(id, e) {
+  e.stopPropagation();
+  const notice = allNotices.find(n => n.id === id);
+  if (!notice) return;
+  notice.isRead = true;
+  try { await fetch(`/api/notices/${id}/read`, { method:'POST' }); } catch {}
+  renderAll();
+}
+
+async function markAllRead() {
+  allNotices.forEach(n => n.isRead = true);
+  try { await fetch('/api/notices/read-all', { method:'POST' }); } catch {}
+  renderAll();
+  const dot = document.querySelector('.notif-dot');
+  if (dot) dot.style.display = 'none';
+  if (window.Toast) Toast.success('All notices marked as read.');
+}
+
+// Tabs
+document.querySelectorAll('.notif-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.notif-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentFilter = tab.dataset.filter;
+    renderAll();
+  });
+});
+
+document.getElementById('markAllReadBtn')?.addEventListener('click', markAllRead);
+
+function getIcon(type) {
+  const m = { info:'📢', warning:'⚠️', success:'✅', error:'❌', announcement:'📋' };
+  return m[(type||'').toLowerCase()] || '🔔';
+}
+function getCls(type) {
+  const m = { info:'blue', warning:'orange', success:'green', error:'red', announcement:'blue' };
+  return m[(type||'').toLowerCase()] || 'blue';
+}
+function formatTime(d) {
+  if (!d) return '';
+  const diff = (Date.now() - new Date(d).getTime()) / 1000;
+  if (diff < 60)    return 'Just now';
+  if (diff < 3600)  return Math.floor(diff/60)  + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  return Math.floor(diff/86400) + 'd ago';
+}
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+loadNotices();
+</script>
+}

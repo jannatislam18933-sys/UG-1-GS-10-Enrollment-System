@@ -1,0 +1,64 @@
+@page
+@model EnrollmentSystemAPI.Pages.Student.FeeSlipSuccessModel
+@{
+    ViewData["Title"]        = "Fee Slip Uploaded";
+    ViewData["TopbarTitle"]  = "Upload Fee Slip";
+    ViewData["StudentName"]  = Model.StudentName;
+    Layout = "_AppLayout";
+}
+
+<div class="page-header">
+  <h1>Upload Fee Slip</h1>
+  <p>Upload your paid challan for verification. Only verified fee slips allow enrollment form submission.</p>
+</div>
+
+<div class="card" style="text-align:center;padding:48px 32px">
+
+  <div class="success-icon-wrap">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+      <polyline points="22 4 12 14.01 9 11.01"/>
+    </svg>
+  </div>
+
+  <h2 style="font-size:20px;font-weight:700;color:var(--text-primary);margin-bottom:8px">
+    Fee Slip Uploaded Successfully!
+  </h2>
+  <p style="font-size:13.5px;color:var(--text-secondary);margin-bottom:32px;max-width:440px;margin-left:auto;margin-right:auto">
+    Your fee slip has been submitted for verification. You will be notified once it's verified.
+  </p>
+
+  <!-- Upload Details -->
+  <div style="max-width:420px;margin:0 auto 36px;text-align:left">
+    <div class="upload-result-row">
+      <span>File Name:</span>
+      <span>@Model.FileName</span>
+    </div>
+    <div class="upload-result-row">
+      <span>Upload Date:</span>
+      <span>@Model.UploadDate</span>
+    </div>
+    <div class="upload-result-row">
+      <span>Status:</span>
+      <span class="status-pending-text">● Pending Verification</span>
+    </div>
+    @if (!string.IsNullOrEmpty(Model.TransactionId))
+    {
+      <div class="upload-result-row">
+        <span>Transaction ID:</span>
+        <span>@Model.TransactionId</span>
+      </div>
+    }
+  </div>
+
+  <!-- Actions -->
+  <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+    <a href="/Student/Dashboard" class="btn btn-secondary" style="width:auto;padding:0 28px">
+      Back to Dashboard
+    </a>
+    <a href="/Student/ApplicationStatus" class="btn btn-primary" style="width:auto;padding:0 28px">
+      Track Status
+    </a>
+  </div>
+
+</div>

@@ -1,28 +1,28 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-
-namespace EnrollmentSystemAPI.Pages.Clerk
+namespace EnrollmentSystemAPI.Pages.Student
 {
-    public class ActivityItem { public string Name=""; public string Action=""; public string TimeAgo=""; }
-
-    public class ClerkDashboardModel : PageModel
+    public class DashboardModel : PageModel
     {
-        public string ClerkName { get; set; } = "Clerk";
-        public List<ActivityItem> RecentActivity { get; set; } = new();
+        public string StudentName { get; set; } = "Ahmed Khan";
+        public string EnrollmentStatus { get; set; } = "Open";
+        public string FeeStatus { get; set; } = "Pending";
+        public string FormStatus { get; set; } = "Not Started";
 
-    public IActionResult OnGet()
-        {
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("JwtToken")))
-            {
-                return RedirectToPage("/Account/Login");
-            }
+        public IActionResult OnGet()
+{
+    if (string.IsNullOrEmpty(HttpContext.Session.GetString("JwtToken")))
+    {
+        return RedirectToPage("/Account/Login");
+    }
 
-            ClerkName =
-                HttpContext.Session.GetString("ClerkName")
-                ?? "Clerk";
+    StudentName =
+        HttpContext.Session.GetString("StudentName")
+        ?? "Student";
 
-            return Page();
-        }
+    return Page();
+}
+        
     }
 }
