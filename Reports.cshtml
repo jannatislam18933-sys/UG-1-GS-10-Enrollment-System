@@ -1,0 +1,228 @@
+@page
+@model EnrollmentSystemAPI.Pages.Admin.ReportsModel
+@{
+    ViewData["Title"]       = "Reports";
+    ViewData["TopbarTitle"] = "Reports";
+    ViewData["AdminName"]   = Model.AdminName;
+    Layout = "_AdminLayout";
+}
+
+<div class="page-header"
+     style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+        <h1>Reports &amp; Analytics</h1>
+        <p>View enrollment statistics and analytics data</p>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+        <select class="form-control" id="cycleFilter"
+                style="height:36px;width:auto;min-width:160px;font-size:13px"
+                onchange="updateCharts()">
+            <option value="spring2026">Spring 2026</option>
+            <option value="fall2025">Fall 2025</option>
+            <option value="spring2025">Spring 2025</option>
+        </select>
+        <button class="btn btn-primary btn-sm" style="width:auto" onclick="exportReport()">
+            ↓ Export Report
+        </button>
+    </div>
+</div>
+
+@* ── Key Metric Cards ─────────────────────────────────────── *@
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-icon blue">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+            </svg>
+        </div>
+        <div class="stat-body">
+            <div class="stat-value">1,230</div>
+            <div class="stat-label">Total Students</div>
+            <div class="stat-delta up">↑ 12% vs last cycle</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+        </div>
+        <div class="stat-body">
+            <div class="stat-value">85%</div>
+            <div class="stat-label">Approval Rate</div>
+            <div class="stat-delta up">↑ 3% vs last cycle</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon orange">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+            </svg>
+        </div>
+        <div class="stat-body">
+            <div class="stat-value">36h</div>
+            <div class="stat-label">Avg. Processing Time</div>
+            <div class="stat-delta down">↓ 4h improvement</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon purple">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+        </div>
+        <div class="stat-body">
+            <div class="stat-value">92%</div>
+            <div class="stat-label">Form Completion Rate</div>
+            <div class="stat-delta up">↑ 5% vs last cycle</div>
+        </div>
+    </div>
+</div>
+
+@* ── Charts ───────────────────────────────────────────────── *@
+<div class="dash-grid">
+    <div class="card">
+        <div class="card-title">Monthly Enrollment Trend</div>
+        <div class="chart-wrap" style="height:220px">
+            <canvas id="trendChart"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title">Department-wise Enrollments</div>
+        <div class="chart-wrap" style="height:220px">
+            <canvas id="deptChart"></canvas>
+        </div>
+    </div>
+</div>
+
+@* ── Fee Verification Stats ───────────────────────────────── *@
+<div class="dash-grid">
+    <div class="card">
+        <div class="card-title">Fee Verification Breakdown</div>
+        <div style="display:flex;align-items:center;gap:24px">
+            <div style="position:relative;width:150px;height:150px;flex-shrink:0">
+                <canvas id="feeDonut"></canvas>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:10px">
+                @foreach (var (label, value, color) in new[]{
+                    ("Verified",        "1,050", "#16A34A"),
+                    ("Pending",         "142",   "#D97706"),
+                    ("Rejected",        "38",    "#DC2626")
+                })
+                {
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#F9FAFB;border-radius:8px">
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <div style="width:10px;height:10px;border-radius:3px;background:@color;flex-shrink:0"></div>
+                            <span style="font-size:13px;color:var(--text-secondary)">@label</span>
+                        </div>
+                        <span style="font-size:16px;font-weight:700;color:@color">@value</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Quick Reports</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+            @foreach (var (icon, title, desc, color) in new[]{
+                ("📋", "Enrollment Report",     "Full list of all enrollments",            "#EFF6FF"),
+                ("💰", "Fee Verification Report","All fee slip verification records",        "#DCFCE7"),
+                ("📊", "Student List",           "Complete student register with programs",  "#EDE9FE")
+            })
+            {
+                <button class="report-btn" onclick="downloadReport('@title')">
+                    <div class="report-btn-icon" style="background:@color">@icon</div>
+                    <div>
+                        <h4>@title</h4>
+                        <p>@desc</p>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" style="margin-left:auto;flex-shrink:0">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let trendChart, deptChart, feeDonut;
+
+function buildCharts() {
+    // Monthly trend
+    trendChart = new Chart(document.getElementById('trendChart'), {
+        type: 'line',
+        data: {
+            labels: ['Oct','Nov','Dec','Jan','Feb','Mar','Apr'],
+            datasets: [{
+                label: 'Enrollments',
+                data: [200,380,460,680,870,1050,1230],
+                borderColor: '#2563EB', backgroundColor: 'rgba(37,99,235,0.08)',
+                borderWidth: 2.5, tension: 0.4, fill: true,
+                pointRadius: 4, pointBackgroundColor: '#2563EB'
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                y: { beginAtZero: true, grid: { color: '#F3F4F6' }, ticks: { font: { size: 11 } } }
+            }
+        }
+    });
+
+    // Department bar
+    deptChart = new Chart(document.getElementById('deptChart'), {
+        type: 'bar',
+        data: {
+            labels: ['CS','SE','IT','Math','Physics','Chemistry','Botany'],
+            datasets: [{
+                label: 'Enrollments',
+                data: [420, 310, 180, 140, 90, 60, 30],
+                backgroundColor: '#2563EB', borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                y: { beginAtZero: true, grid: { color: '#F3F4F6' }, ticks: { font: { size: 11 } } }
+            }
+        }
+    });
+
+    // Fee donut
+    feeDonut = new Chart(document.getElementById('feeDonut'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Verified','Pending','Rejected'],
+            datasets: [{ data:[1050,142,38], backgroundColor:['#16A34A','#D97706','#DC2626'], borderWidth:2, borderColor:'#fff', hoverOffset:4 }]
+        },
+        options: { responsive:false, cutout:'68%', plugins:{ legend:{ display:false } } }
+    });
+}
+
+function updateCharts() {
+    // In production: fetch real data for selected cycle and update chart.data
+    if(window.Toast) Toast.info('Chart updated for selected cycle.');
+}
+
+function exportReport() {
+    if(window.Toast) Toast.success('Full report export triggered. Check your downloads.');
+}
+
+function downloadReport(title) {
+    if(window.Toast) Toast.success(`"${title}" download started.`);
+}
+
+buildCharts();
+</script>
+}

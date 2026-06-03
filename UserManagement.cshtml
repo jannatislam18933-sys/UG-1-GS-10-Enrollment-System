@@ -1,0 +1,386 @@
+@page
+@model EnrollmentSystemAPI.Pages.Admin.UserManagementModel
+@{
+    ViewData["Title"]       = "User Management";
+    ViewData["TopbarTitle"] = "User Management";
+    ViewData["AdminName"]   = Model.AdminName;
+    Layout = "_AdminLayout";
+}
+
+<div class="page-header"
+     style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+        <h1>User Management</h1>
+        <p>Manage students, clerks, and administrators</p>
+    </div>
+    <button class="btn btn-primary btn-sm" style="width:auto;margin-top:6px"
+            onclick="openAddModal()">
+        + Add User
+    </button>
+</div>
+
+@* ── Role Tabs ────────────────────────────────────────────── *@
+<div class="role-tabs" id="roleTabs">
+    <button class="role-tab active" onclick="switchTab(this,'students')">
+        Students
+        <span style="font-size:11px;color:var(--text-muted);margin-left:4px">(@Model.Students.Count)</span>
+    </button>
+    <button class="role-tab" onclick="switchTab(this,'clerks')">
+        Clerks
+        <span style="font-size:11px;color:var(--text-muted);margin-left:4px">(@Model.Clerks.Count)</span>
+    </button>
+    <button class="role-tab" onclick="switchTab(this,'admins')">
+        Admins
+        <span style="font-size:11px;color:var(--text-muted);margin-left:4px">(@Model.Admins.Count)</span>
+    </button>
+</div>
+
+@* ── Search bar ───────────────────────────────────────────── *@
+<div class="table-toolbar" style="margin-bottom:14px">
+    <div class="search-input-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" class="search-input" id="userSearch"
+               placeholder="Search by name or email…" oninput="searchUsers()" />
+    </div>
+</div>
+
+@* ══════════ STUDENTS TABLE ══════════ *@
+<div id="tab_students" class="tab-panel">
+    <div class="card" style="padding:0;overflow:hidden">
+        <div class="data-table-wrap">
+            <table class="data-table" id="studentsTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Registration No</th>
+                        <th>Program</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model.Students)
+                    {
+                        <tr data-name="@s.Name.ToLower()" data-email="@s.Email.ToLower()">
+                            <td class="td-name">@s.Name</td>
+                            <td class="td-muted">@s.Email</td>
+                            <td class="td-mono">@s.RegistrationNo</td>
+                            <td style="font-size:13px">@s.Program</td>
+                            <td><span class="pill @(s.Active ? "pill-active" : "pill-closed")">
+                                @(s.Active ? "Active" : "Inactive")</span></td>
+                            <td>
+                                <div class="action-btns">
+                                    <button class="action-btn edit"
+                                            onclick="openEditModal('@s.Id','@s.Name','@s.Email','student')">✏</button>
+                                    <button class="action-btn delete"
+                                            onclick="confirmDelete('@s.Id','@s.Name')">🗑</button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@* ══════════ CLERKS TABLE ══════════ *@
+<div id="tab_clerks" class="tab-panel" style="display:none">
+    <div class="card" style="padding:0;overflow:hidden">
+        <div class="data-table-wrap">
+            <table class="data-table" id="clerksTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Department</th>
+                        <th>Employee ID</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model.Clerks)
+                    {
+                        <tr data-name="@c.Name.ToLower()" data-email="@c.Email.ToLower()">
+                            <td class="td-name">@c.Name</td>
+                            <td class="td-muted">@c.Email</td>
+                            <td>@c.Department</td>
+                            <td class="td-mono">@c.EmployeeId</td>
+                            <td><span class="pill @(c.Active ? "pill-active" : "pill-closed")">
+                                @(c.Active ? "Active" : "Inactive")</span></td>
+                            <td>
+                                <div class="action-btns">
+                                    <button class="action-btn edit"
+                                            onclick="openEditModal('@c.Id','@c.Name','@c.Email','clerk')">✏</button>
+                                    <button class="action-btn delete"
+                                            onclick="confirmDelete('@c.Id','@c.Name')">🗑</button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@* ══════════ ADMINS TABLE ══════════ *@
+<div id="tab_admins" class="tab-panel" style="display:none">
+    <div class="card" style="padding:0;overflow:hidden">
+        <div class="data-table-wrap">
+            <table class="data-table" id="adminsTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var a in Model.Admins)
+                    {
+                        <tr data-name="@a.Name.ToLower()" data-email="@a.Email.ToLower()">
+                            <td class="td-name">@a.Name</td>
+                            <td class="td-muted">@a.Email</td>
+                            <td>@a.Role</td>
+                            <td><span class="pill pill-active">Active</span></td>
+                            <td>
+                                <div class="action-btns">
+                                    <button class="action-btn edit"
+                                            onclick="openEditModal('@a.Id','@a.Name','@a.Email','admin')">✏</button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@* ── Add / Edit User Modal ────────────────────────────────── *@
+<div class="modal-backdrop" id="userModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title" id="modalTitle">Add User</span>
+            <button class="modal-close" onclick="closeUserModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">Role</label>
+                <select id="um_role" class="form-control" onchange="toggleRoleFields()">
+                    <option value="student">Student</option>
+                    <option value="clerk">Clerk</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <div class="form-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
+                <div class="form-group">
+                    <label class="form-label">Full Name <span style="color:var(--color-danger)">*</span></label>
+                    <input type="text" id="um_name" class="form-control" placeholder="Full name" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email <span style="color:var(--color-danger)">*</span></label>
+                    <input type="email" id="um_email" class="form-control" placeholder="email@university.edu" required />
+                </div>
+            </div>
+
+            @* Student fields *@
+            <div id="studentFields">
+                <div class="form-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
+                    <div class="form-group">
+                        <label class="form-label">Registration No</label>
+                        <input type="text" id="um_regNo" class="form-control" placeholder="FA21-BSE-001" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Program</label>
+                        <select id="um_program" class="form-control">
+                            <option value="">Select program</option>
+                            <option>BS Computer Science</option>
+                            <option>BS Software Engineering</option>
+                            <option>BS Information Technology</option>
+                            <option>MS Computer Science</option>
+                            <option>MPhil Mathematics</option>
+                            <option>PhD Computer Science</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            @* Clerk fields *@
+            <div id="clerkFields" style="display:none">
+                <div class="form-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
+                    <div class="form-group">
+                        <label class="form-label">Employee ID</label>
+                        <input type="text" id="um_empId" class="form-control" placeholder="EMP-2024-001" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Department</label>
+                        <select id="um_dept" class="form-control">
+                            <option value="">Select department</option>
+                            <option>Computer Science</option>
+                            <option>Software Engineering</option>
+                            <option>Mathematics</option>
+                            <option>Physics</option>
+                            <option>Chemistry</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            @* Admin fields *@
+            <div id="adminFields" style="display:none">
+                <div class="form-group">
+                    <label class="form-label">Admin Role</label>
+                    <select id="um_adminRole" class="form-control">
+                        <option>Super Admin</option>
+                        <option>Admin</option>
+                        <option>Manager</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Temporary Password <span style="color:var(--color-danger)">*</span></label>
+                <input type="password" id="um_password" class="form-control"
+                       placeholder="Set a temporary password" />
+                <p style="font-size:12px;color:var(--text-muted);margin-top:4px">
+                    User will be prompted to change on first login.
+                </p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeUserModal()" style="width:auto">Cancel</button>
+            <button class="btn btn-primary" onclick="saveUser()" style="width:auto;min-width:130px"
+                    id="saveUserBtn">Save User</button>
+        </div>
+    </div>
+</div>
+
+@* ── Delete confirm modal ─────────────────────────────────── *@
+<div class="modal-backdrop" id="deleteModal">
+    <div class="modal" style="max-width:400px">
+        <div class="modal-header">
+            <span class="modal-title">Confirm Delete</span>
+            <button class="modal-close" onclick="document.getElementById('deleteModal').classList.remove('open')">✕</button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size:14px;color:var(--text-secondary);line-height:1.7">
+                Are you sure you want to remove
+                <strong id="deleteTargetName" style="color:var(--text-primary)"></strong>?
+                This action cannot be undone.
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" style="width:auto"
+                    onclick="document.getElementById('deleteModal').classList.remove('open')">Cancel</button>
+            <button class="btn" id="confirmDeleteBtn" style="width:auto;background:#DC2626;color:#fff;border:none;min-width:110px">
+                Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<style>
+.tab-panel { animation: fadeIn .2s ease; }
+@@keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+</style>
+<script>
+let activeTab = 'students';
+
+function switchTab(btn, tab) {
+    document.querySelectorAll('.role-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+    document.getElementById('tab_' + tab).style.display = 'block';
+    activeTab = tab;
+    document.getElementById('userSearch').value = '';
+}
+
+function searchUsers() {
+    const q = document.getElementById('userSearch').value.toLowerCase();
+    const table = document.getElementById(activeTab + 'Table');
+    if (!table) return;
+    table.querySelectorAll('tbody tr').forEach(row => {
+        const name  = row.dataset.name  || '';
+        const email = row.dataset.email || '';
+        row.style.display = name.includes(q) || email.includes(q) ? '' : 'none';
+    });
+}
+
+function toggleRoleFields() {
+    const role = document.getElementById('um_role').value;
+    document.getElementById('studentFields').style.display = role === 'student' ? 'block' : 'none';
+    document.getElementById('clerkFields').style.display   = role === 'clerk'   ? 'block' : 'none';
+    document.getElementById('adminFields').style.display   = role === 'admin'   ? 'block' : 'none';
+}
+
+function openAddModal() {
+    document.getElementById('modalTitle').textContent = 'Add User';
+    document.getElementById('um_name').value  = '';
+    document.getElementById('um_email').value = '';
+    document.getElementById('um_password').value = '';
+    document.getElementById('um_role').value  = 'student';
+    toggleRoleFields();
+    document.getElementById('userModal').classList.add('open');
+}
+
+function openEditModal(id, name, email, role) {
+    document.getElementById('modalTitle').textContent = 'Edit User';
+    document.getElementById('um_name').value  = name;
+    document.getElementById('um_email').value = email;
+    document.getElementById('um_role').value  = role;
+    toggleRoleFields();
+    document.getElementById('userModal').classList.add('open');
+}
+
+function closeUserModal() {
+    document.getElementById('userModal').classList.remove('open');
+}
+
+async function saveUser() {
+    const name = document.getElementById('um_name').value.trim();
+    const email = document.getElementById('um_email').value.trim();
+    if (!name || !email) { if(window.Toast) Toast.error('Name and email are required.'); return; }
+    const btn = document.getElementById('saveUserBtn');
+    btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span>';
+    try {
+        // await fetch('/api/admin/users', { method:'POST', ... });
+        await new Promise(r => setTimeout(r, 700)); // demo delay
+        closeUserModal();
+        if (window.Toast) Toast.success('User saved successfully.');
+    } catch {
+        if (window.Toast) Toast.error('Failed to save user.');
+    } finally {
+        btn.disabled = false; btn.innerHTML = 'Save User';
+    }
+}
+
+let deleteTargetId = null;
+function confirmDelete(id, name) {
+    deleteTargetId = id;
+    document.getElementById('deleteTargetName').textContent = name;
+    document.getElementById('deleteModal').classList.add('open');
+    document.getElementById('confirmDeleteBtn').onclick = async () => {
+        try {
+            // await fetch(`/api/admin/users/${id}`, { method:'DELETE' });
+            if (window.Toast) Toast.success('User removed.');
+        } catch {}
+        document.getElementById('deleteModal').classList.remove('open');
+    };
+}
+
+['userModal','deleteModal'].forEach(id => {
+    document.getElementById(id).addEventListener('click', function(e) {
+        if (e.target === this) this.classList.remove('open');
+    });
+});
+</script>
+}
