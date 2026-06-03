@@ -1,0 +1,102 @@
+@page
+@model EnrollmentSystemAPI.Pages.Account.LoginModel
+
+@{
+    ViewData["Title"] = "Login";
+    Layout = "_AuthLayout";
+}
+
+<!--  Background  -->
+<div class="auth-bg"
+     style="position:fixed;
+            inset:0;
+            background-image: url("/images/OIP.webp");            
+            background-size:cover;
+            background-position:center;
+            z-index:-1;">
+</div>
+
+<div class="auth-card"
+style="position:relative;
+            z-index:1000;">
+
+  <!-- Title text -->
+    <div style="text-align:center class="auth-logo-text" >
+      <h2>Enrollment Portal</h2>
+    </div>
+ 
+  <!-- System Title -->
+  <div style="text-align:center; margin:10px 0 0;">
+    <h3 style="margin:0;">UG-1 & GS-10 Enrollment System for UAF</h3>
+  </div>
+
+  <!-- Center Logo Placeholder -->
+  <div class="auth-center-logo" style="text-align:center; margin:20px 0;">
+    <img src="~/images/uaf-logo.png" alt="Logo" style="max-height:90px;" />
+  </div>
+
+  <!-- Heading -->
+  <div class="auth-heading">
+    <h1>Enter your Login credentials</h1>
+  </div>
+
+  <!-- Server-side error alert -->
+  @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+  {
+    <div class="alert alert-danger show">@Model.ErrorMessage</div>
+  }
+
+  <!-- Client-side alert placeholder -->
+  <div class="alert alert-danger" id="loginAlert"></div>
+
+  <!-- Form -->
+<form method="post">
+  @Html.AntiForgeryToken()
+
+    <div class="form-group">
+    <label class="form-label" for="Input_Email">Email Address</label>
+    <input name="Input.Email"
+           id="Input_Email"
+           type="email"
+           class="form-control"
+           placeholder="student@university.edu" />
+    <span asp-validation-for="Input.Email" class="text-danger"></span>
+</div>
+
+    <div class="form-group">
+    <label class="form-label" for="Input_Password">Password</label>
+    <div class="input-wrapper">
+        <input name="Input.Password"
+               id="Input_Password"
+               type="password"
+               class="form-control"
+               placeholder="Enter your password" />
+        <button type="button" class="pw-toggle">Show</button>
+    </div>
+    <span asp-validation-for="Input.Password" class="text-danger"></span>
+</div>
+
+    <div class="form-row">
+
+        <label class="checkbox-label">
+<input name="Input.RememberMe"
+       id="Input_RememberMe"
+       type="checkbox" />            Remember me
+        </label>
+
+        <a href="/Account/ForgotPassword"
+           style="font-size:13px;color:var(--color-primary)">
+            Forgot password?
+        </a>
+
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-lg">
+        Login
+    </button>
+
+</form>
+</div>
+
+
+</div>

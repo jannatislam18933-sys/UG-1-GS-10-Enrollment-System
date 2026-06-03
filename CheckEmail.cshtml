@@ -1,0 +1,68 @@
+@page
+@model EnrollmentSystemAPI.Pages.Account.CheckEmailModel
+@{
+    ViewData["Title"] = "Check Your Email";
+    Layout = "_AuthLayout";
+}
+
+<div class="auth-card" style="text-align:center">
+
+  <div class="auth-logo" style="justify-content:center">
+    <div class="auth-logo-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+        <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+      </svg>
+    </div>
+    <div class="auth-logo-text" style="text-align:left">
+      <h2>University Portal</h2>
+      <p>Enrollment System</p>
+    </div>
+  </div>
+
+  <div class="auth-heading">
+    <h1>Check Your Email</h1>
+    <p>Password reset instructions sent</p>
+  </div>
+
+  <div class="email-icon-wrap">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+      <polyline points="22,6 12,13 2,6"/>
+    </svg>
+  </div>
+
+  @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+  {
+    <div class="alert alert-danger show">@Model.ErrorMessage</div>
+  }
+  @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+  {
+    <div class="alert alert-success show">@Model.SuccessMessage</div>
+  }
+
+  <p style="font-size:13.5px;color:var(--text-secondary);margin-bottom:12px;line-height:1.7">
+    We've sent password reset instructions to your email address. Please check your inbox and follow
+    the link to reset your password.
+  </p>
+
+  <p style="font-size:13px;color:var(--text-secondary);margin-bottom:24px">
+    Didn't receive the email? Check your spam folder or try again.
+  </p>
+
+  <form method="post" style="margin-bottom:0">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="Email" value="@Model.SentToEmail" />
+    <button type="submit" class="btn btn-primary btn-lg">
+      Resend Email
+    </button>
+  </form>
+
+  <a href="/Account/Login" class="back-link">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+    Back to Login
+  </a>
+
+</div>
