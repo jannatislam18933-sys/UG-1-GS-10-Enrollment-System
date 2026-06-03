@@ -1,26 +1,15 @@
 @page
-@model EnrollmentSystemAPI.Pages.Admin.AdminDashboardModel
+@model EnrollmentSystemAPI.Pages.Clerk.ClerkDashboardModel
 @{
     ViewData["Title"]       = "Dashboard";
     ViewData["TopbarTitle"] = "Dashboard";
-    ViewData["AdminName"]   = Model.AdminName;
-    Layout = "_AdminLayout";
+    ViewData["ClerkName"]   = Model.ClerkName;
+    Layout = "_ClerkLayout";
 }
 
-<div class="page-header"
-     style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
-    <div>
-        <h1>Dashboard</h1>
-        <p>Welcome back, @Model.AdminName — system overview for Spring 2026</p>
-    </div>
-    <button class="btn btn-outline btn-sm" style="width:auto;margin-top:6px"
-            onclick="location.reload()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="23 4 23 10 17 10"/>
-            <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
-        </svg>
-        Refresh
-    </button>
+<div class="page-header">
+    <h1>Dashboard</h1>
+    <p>Welcome back, @Model.ClerkName — here's today's overview</p>
 </div>
 
 @* ── Stat Cards ───────────────────────────────────────────── *@
@@ -34,21 +23,9 @@
             </svg>
         </div>
         <div class="stat-body">
-            <div class="stat-value">1,230</div>
-            <div class="stat-label">Total Enrollments</div>
-            <div class="stat-delta up">↑ 12% vs last cycle</div>
-        </div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon green">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="20 6 9 17 4 12"/>
-            </svg>
-        </div>
-        <div class="stat-body">
-            <div class="stat-value">1,050</div>
-            <div class="stat-label">Approved</div>
-            <div class="stat-delta up">85% approval rate</div>
+            <div class="stat-value">24</div>
+            <div class="stat-label">Pending Verifications</div>
+            <div class="stat-delta up">↑ 3 since yesterday</div>
         </div>
     </div>
     <div class="stat-card">
@@ -59,9 +36,21 @@
             </svg>
         </div>
         <div class="stat-body">
-            <div class="stat-value">142</div>
-            <div class="stat-label">Pending Review</div>
-            <div class="stat-delta neutral">Awaiting clerk action</div>
+            <div class="stat-value">18</div>
+            <div class="stat-label">Waiting Enrollments</div>
+            <div class="stat-delta neutral">No change</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg>
+        </div>
+        <div class="stat-body">
+            <div class="stat-value">86</div>
+            <div class="stat-label">Approved This Week</div>
+            <div class="stat-delta up">↑ 12% vs last week</div>
         </div>
     </div>
     <div class="stat-card">
@@ -73,154 +62,94 @@
             </svg>
         </div>
         <div class="stat-body">
-            <div class="stat-value">38</div>
-            <div class="stat-label">Rejected</div>
-            <div class="stat-delta down">↓ 3% vs last cycle</div>
+            <div class="stat-value">12</div>
+            <div class="stat-label">Rejected This Week</div>
+            <div class="stat-delta down">↓ 4 vs last week</div>
         </div>
     </div>
 </div>
 
-@* ── Charts row ───────────────────────────────────────────── *@
+@* ── Quick Actions + Chart ─────────────────────────────────── *@
 <div class="dash-grid">
     <div class="card">
-        <div class="card-title">Enrollment Trend</div>
-        <div class="chart-wrap" style="height:210px">
-            <canvas id="trendChart"></canvas>
+        <div class="card-title">Quick Actions</div>
+        <div class="quick-action-item">
+            <div class="quick-action-left">
+                <div class="quick-action-icon" style="background:#EFF6FF;color:#2563EB">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                </div>
+                <div>
+                    <h4>Verify Fee Slips</h4>
+                    <p>24 submissions pending review</p>
+                </div>
+            </div>
+            <a href="/Clerk/FeeVerification" class="btn btn-primary btn-sm" style="width:auto">Review</a>
+        </div>
+        <div class="quick-action-item">
+            <div class="quick-action-left">
+                <div class="quick-action-icon" style="background:#DCFCE7;color:#16A34A">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                </div>
+                <div>
+                    <h4>Review Enrollments</h4>
+                    <p>18 enrollment forms to review</p>
+                </div>
+            </div>
+            <a href="/Clerk/EnrollmentReview" class="btn btn-outline btn-sm" style="width:auto">Review</a>
         </div>
     </div>
+
     <div class="card">
-        <div class="card-title">Program Distribution</div>
-        <div style="display:flex;align-items:center;gap:24px;height:210px">
-            <div style="position:relative;flex-shrink:0;width:170px;height:170px">
-                <canvas id="donutChart"></canvas>
-            </div>
-            <div class="donut-legend">
-                <div class="donut-legend-item">
-                    <div class="donut-legend-dot" style="background:#2563EB"></div>
-                    <span>BS CS / SE&nbsp;<strong>42%</strong></span>
-                </div>
-                <div class="donut-legend-item">
-                    <div class="donut-legend-dot" style="background:#16A34A"></div>
-                    <span>BS Other&nbsp;<strong>28%</strong></span>
-                </div>
-                <div class="donut-legend-item">
-                    <div class="donut-legend-dot" style="background:#D97706"></div>
-                    <span>MS / MPhil&nbsp;<strong>20%</strong></span>
-                </div>
-                <div class="donut-legend-item">
-                    <div class="donut-legend-dot" style="background:#A855F7"></div>
-                    <span>PhD&nbsp;<strong>10%</strong></span>
-                </div>
-            </div>
+        <div class="card-title">Weekly Performance</div>
+        <div class="chart-wrap" style="height:170px">
+            <canvas id="weeklyChart"></canvas>
         </div>
     </div>
 </div>
 
-@* ── Bottom info row ──────────────────────────────────────── *@
-<div class="dash-grid-3">
-    <div class="card">
-        <div class="card-title">Active Enrollment Cycle</div>
-        <div style="margin-bottom:8px">
-            <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:6px">
-                Spring 2026
-                <span class="pill pill-active" style="font-size:11px;margin-left:6px">Active</span>
-            </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
-            <div>
-                <div style="font-size:11px;color:var(--text-secondary)">Start Date</div>
-                <div style="font-size:13px;font-weight:600">Jan 15, 2026</div>
-            </div>
-            <div>
-                <div style="font-size:11px;color:var(--text-secondary)">End Date</div>
-                <div style="font-size:13px;font-weight:600">Apr 30, 2026</div>
-            </div>
-            <div>
-                <div style="font-size:11px;color:var(--text-secondary)">Total Enrolled</div>
-                <div style="font-size:20px;font-weight:700;color:var(--color-primary)">1,104</div>
-            </div>
-            <div>
-                <div style="font-size:11px;color:var(--text-secondary)">Days Left</div>
-                <div style="font-size:20px;font-weight:700;color:var(--color-warning)">11</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-title">User Statistics</div>
-        <div style="display:flex;flex-direction:column;gap:10px">
-            @foreach (var (label, value, color) in new[]{
-                ("Total Students",  "1,230", "#2563EB"),
-                ("Active Clerks",   "12",    "#16A34A"),
-                ("Administrators",  "3",     "#7C3AED")
-            })
-            {
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#F9FAFB;border-radius:8px">
-                    <span style="font-size:13px;color:var(--text-secondary)">@label</span>
-                    <span style="font-size:18px;font-weight:700;color:@color">@value</span>
+@* ── Recent Activity ──────────────────────────────────────── *@
+<div class="card">
+    <div class="card-title">Recent Activity</div>
+    <div class="activity-list">
+        @foreach (var a in Model.RecentActivity)
+        {
+            <div class="activity-item">
+                <div class="activity-avatar">@a.Name[0]</div>
+                <div class="activity-body">
+                    <div class="activity-name">@a.Name</div>
+                    <div class="activity-detail">@a.Action</div>
                 </div>
-            }
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-title">System Health</div>
-        <div style="display:flex;flex-direction:column;gap:10px">
-            @foreach (var (label, value, ok) in new[]{
-                ("Database",    "Healthy",        true),
-                ("API Status",  "Online",         true),
-                ("Last Backup", "2 hours ago",    true)
-            })
-            {
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#F9FAFB;border-radius:8px">
-                    <span style="font-size:13px;color:var(--text-secondary)">@label</span>
-                    <span class="pill @(ok ? "pill-approved" : "pill-rejected")"
-                          style="font-size:11px">@value</span>
-                </div>
-            }
-        </div>
+                <div class="activity-time">@a.TimeAgo</div>
+            </div>
+        }
     </div>
 </div>
 
 @section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-// Enrollment trend line chart
-new Chart(document.getElementById('trendChart'), {
-  type: 'line',
+new Chart(document.getElementById('weeklyChart'), {
+  type: 'bar',
   data: {
-    labels: ['Oct','Nov','Dec','Jan','Feb','Mar','Apr'],
-    datasets: [{
-      label: 'Enrollments',
-      data: [400, 520, 480, 750, 900, 1050, 1230],
-      borderColor: '#2563EB', backgroundColor: 'rgba(37,99,235,0.08)',
-      borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#2563EB',
-      tension: 0.4, fill: true
-    }]
+    labels: ['Mon','Tue','Wed','Thu','Fri','Sat'],
+    datasets: [
+      { label:'Verified', data:[14,18,12,20,16,6],  backgroundColor:'#16A34A', borderRadius:4 },
+      { label:'Rejected', data:[2,3,1,4,2,0],        backgroundColor:'#EF4444', borderRadius:4 }
+    ]
   },
   options: {
     responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
+    plugins: { legend:{ position:'bottom', labels:{ boxWidth:10, font:{ size:11 } } } },
     scales: {
-      x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-      y: { beginAtZero: true, grid: { color: '#F3F4F6' }, ticks: { font: { size: 11 } } }
+      x: { grid:{ display:false }, ticks:{ font:{ size:11 } } },
+      y: { beginAtZero:true, grid:{ color:'#F3F4F6' }, ticks:{ font:{ size:11 } } }
     }
-  }
-});
-
-// Program donut chart
-new Chart(document.getElementById('donutChart'), {
-  type: 'doughnut',
-  data: {
-    labels: ['BS CS/SE', 'BS Other', 'MS/MPhil', 'PhD'],
-    datasets: [{
-      data: [42, 28, 20, 10],
-      backgroundColor: ['#2563EB', '#16A34A', '#D97706', '#A855F7'],
-      borderWidth: 2, borderColor: '#fff', hoverOffset: 6
-    }]
-  },
-  options: {
-    responsive: false, cutout: '68%',
-    plugins: { legend: { display: false } }
   }
 });
 </script>

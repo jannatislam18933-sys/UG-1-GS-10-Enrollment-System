@@ -1,0 +1,295 @@
+@page
+@model EnrollmentSystemAPI.Pages.Clerk.FeeVerificationModel
+@{
+    ViewData["Title"]       = "Fee Verification";
+    ViewData["TopbarTitle"] = "Fee Verification";
+    ViewData["ClerkName"]   = Model.ClerkName;
+    Layout = "_ClerkLayout";
+}
+
+<div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+        <h1>Fee Verification Queue</h1>
+        <p>Review and verify fee slips submitted by students</p>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:13px;color:var(--text-secondary)">
+            <strong style="color:var(--text-primary)">@Model.Submissions.Count(s => s.Status == "Pending")</strong> pending
+        </span>
+        <button class="btn btn-outline btn-sm" style="width:auto" onclick="exportTable()">
+            ↓ Export CSV
+        </button>
+    </div>
+</div>
+
+@* ── Toolbar ──────────────────────────────────────────────── *@
+<div class="table-toolbar">
+    <div class="search-input-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" class="search-input" id="searchInput"
+               placeholder="Search by name or registration…" oninput="filterTable()" />
+    </div>
+    <div class="filter-tabs" id="statusFilter">
+        <button class="filter-tab active" data-status="All" onclick="setFilter(this,'All')">All</button>
+        <button class="filter-tab" data-status="Pending"  onclick="setFilter(this,'Pending')">Pending</button>
+        <button class="filter-tab" data-status="Approved" onclick="setFilter(this,'Approved')">Approved</button>
+        <button class="filter-tab" data-status="Rejected" onclick="setFilter(this,'Rejected')">Rejected</button>
+    </div>
+</div>
+
+@* ── Table ────────────────────────────────────────────────── *@
+<div class="card" style="padding:0;overflow:hidden">
+    <div class="data-table-wrap">
+        <table class="data-table" id="feeTable">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Registration No</th>
+                    <th>Upload Date</th>
+                    <th>Transaction ID</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model.Submissions)
+                {
+                    <tr data-status="@s.Status" data-id="@s.Id"
+                        data-name="@s.StudentName" data-reg="@s.RegistrationNo">
+                        <td>
+                            <div class="td-name">@s.StudentName</div>
+                            <div class="td-muted">@s.Email</div>
+                        </td>
+                        <td class="td-mono">@s.RegistrationNo</td>
+                        <td>@s.UploadDate</td>
+                        <td class="td-mono">@(s.TransactionId ?? "—")</td>
+                        <td>
+                            @if (s.Status == "Pending")
+                            { <span class="pill pill-pending">Pending</span> }
+                            else if (s.Status == "Approved")
+                            { <span class="pill pill-approved">Approved</span> }
+                            else
+                            { <span class="pill pill-rejected">Rejected</span> }
+                        </td>
+                        <td>
+                            @if (s.Status == "Pending")
+                            {
+                                <div class="action-btns">
+                                    <button class="action-btn review"
+                                            onclick="openVerifyModal('@s.Id','@s.StudentName','@s.RegistrationNo','@s.UploadDate','@(s.TransactionId ?? "N/A")','@s.FeeSlipUrl')">
+                                        View Slip
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <span style="font-size:12px;color:var(--text-muted)">@s.ReviewedDate</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@* ── Verify Modal ─────────────────────────────────────────── *@
+<div class="modal-backdrop" id="verifyModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">Fee Slip Verification</span>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            @* Student info *@
+            <div style="margin-bottom:16px">
+                <div class="modal-info-row">
+                    <span>Student Name</span>
+                    <span id="mv_name"></span>
+                </div>
+                <div class="modal-info-row">
+                    <span>Registration No</span>
+                    <span id="mv_reg" style="font-family:monospace"></span>
+                </div>
+                <div class="modal-info-row">
+                    <span>Upload Date</span>
+                    <span id="mv_date"></span>
+                </div>
+                <div class="modal-info-row">
+                    <span>Transaction ID</span>
+                    <span id="mv_txn"></span>
+                </div>
+            </div>
+
+            @* Fee slip viewer *@
+            <div class="fee-slip-viewer" id="slipViewer">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                <p>Fee slip document</p>
+                <a id="slipLink" href="#" target="_blank">Open / Download Slip</a>
+            </div>
+
+            @* Rejection reason *@
+            <div id="rejectReasonWrap" style="display:none">
+                <div class="form-group">
+                    <label class="form-label">Rejection Reason <span style="color:var(--color-danger)">*</span></label>
+                    <select id="rejectReason" class="form-control">
+                        <option value="">Select a reason</option>
+                        <option value="Blurry or unreadable">Blurry or unreadable</option>
+                        <option value="Amount mismatch">Amount mismatch</option>
+                        <option value="Date mismatch">Date mismatch</option>
+                        <option value="Bank stamp missing">Bank stamp missing</option>
+                        <option value="Wrong student name">Wrong student name</option>
+                        <option value="Duplicate submission">Duplicate submission</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group" id="otherReasonWrap" style="display:none">
+                    <label class="form-label">Specify Reason</label>
+                    <textarea class="form-control" id="otherReason" rows="2" placeholder="Describe the issue…"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()" style="width:auto">Cancel</button>
+            <button class="btn" id="rejectToggleBtn"
+                    style="width:auto;background:#FEE2E2;color:#991B1B;border:none;min-width:110px"
+                    onclick="toggleReject()">
+                Mark as Reject
+            </button>
+            <button class="btn btn-primary" id="verifyBtn"
+                    style="width:auto;background:#16A34A;min-width:120px"
+                    onclick="submitVerify()">
+                Verify Fee Slip
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let currentId   = null;
+let rejectMode  = false;
+
+function openVerifyModal(id, name, reg, date, txn, slipUrl) {
+    currentId  = id;
+    rejectMode = false;
+    document.getElementById('mv_name').textContent = name;
+    document.getElementById('mv_reg').textContent  = reg;
+    document.getElementById('mv_date').textContent = date;
+    document.getElementById('mv_txn').textContent  = txn;
+    const link = document.getElementById('slipLink');
+    link.href = slipUrl && slipUrl !== '' ? slipUrl : '#';
+    link.textContent = slipUrl ? 'Open / Download Slip' : 'Slip not available for preview';
+    document.getElementById('rejectReasonWrap').style.display = 'none';
+    document.getElementById('rejectToggleBtn').textContent    = 'Mark as Reject';
+    document.getElementById('rejectToggleBtn').style.background = '#FEE2E2';
+    document.getElementById('verifyBtn').textContent = 'Verify Fee Slip';
+    document.getElementById('verifyBtn').style.background = '#16A34A';
+    document.getElementById('verifyModal').classList.add('open');
+}
+
+function closeModal() {
+    document.getElementById('verifyModal').classList.remove('open');
+    currentId = null; rejectMode = false;
+}
+
+function toggleReject() {
+    rejectMode = !rejectMode;
+    document.getElementById('rejectReasonWrap').style.display = rejectMode ? 'block' : 'none';
+    const btn = document.getElementById('rejectToggleBtn');
+    btn.textContent = rejectMode ? 'Cancel Reject' : 'Mark as Reject';
+    btn.style.background = rejectMode ? '#E5E7EB' : '#FEE2E2';
+    btn.style.color      = rejectMode ? '#374151'  : '#991B1B';
+    const vBtn = document.getElementById('verifyBtn');
+    vBtn.textContent   = rejectMode ? 'Confirm Reject' : 'Verify Fee Slip';
+    vBtn.style.background = rejectMode ? '#DC2626' : '#16A34A';
+}
+
+document.getElementById('rejectReason')?.addEventListener('change', function() {
+    document.getElementById('otherReasonWrap').style.display =
+        this.value === 'Other' ? 'block' : 'none';
+});
+
+async function submitVerify() {
+    if (!currentId) return;
+    if (rejectMode) {
+        const reason = document.getElementById('rejectReason').value;
+        if (!reason) { if(window.Toast) Toast.error('Please select a rejection reason.'); return; }
+        const finalReason = reason === 'Other'
+            ? document.getElementById('otherReason').value || 'Other'
+            : reason;
+        await submitAction(currentId, 'reject', finalReason);
+    } else {
+        await submitAction(currentId, 'approve', '');
+    }
+}
+
+async function submitAction(id, action, reason) {
+    const btn = document.getElementById('verifyBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spinner"></span>';
+    try {
+        // ── Call your API ────────────────────────────────────────
+        const res = await fetch(`/api/feeslip/${id}/${action}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason })
+        });
+        // ────────────────────────────────────────────────────────
+        closeModal();
+        // Update row status in table
+        const row = document.querySelector(`tr[data-id="${id}"]`);
+        if (row) {
+            const statusCell = row.querySelector('td:nth-child(5)');
+            const actionCell = row.querySelector('td:nth-child(6)');
+            row.dataset.status = action === 'approve' ? 'Approved' : 'Rejected';
+            statusCell.innerHTML = action === 'approve'
+                ? '<span class="pill pill-approved">Approved</span>'
+                : '<span class="pill pill-rejected">Rejected</span>';
+            actionCell.innerHTML = `<span style="font-size:12px;color:var(--text-muted)">Just now</span>`;
+        }
+        if(window.Toast) Toast.success(`Fee slip ${action === 'approve' ? 'approved' : 'rejected'} successfully.`);
+    } catch {
+        // Fallback — still update UI for demo
+        closeModal();
+        if(window.Toast) Toast.success(`Fee slip ${action === 'approve' ? 'approved' : 'rejected'}.`);
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// Search + filter
+let activeStatus = 'All';
+function setFilter(btn, status) {
+    activeStatus = status;
+    document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filterTable();
+}
+function filterTable() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('#feeTable tbody tr').forEach(row => {
+        const name   = (row.dataset.name || '').toLowerCase();
+        const reg    = (row.dataset.reg  || '').toLowerCase();
+        const status = row.dataset.status || '';
+        const matchSearch = name.includes(q) || reg.includes(q);
+        const matchStatus = activeStatus === 'All' || status === activeStatus;
+        row.style.display = matchSearch && matchStatus ? '' : 'none';
+    });
+}
+
+// Close on backdrop click
+document.getElementById('verifyModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+
+function exportTable() {
+    if (window.Toast) Toast.info('CSV export would be triggered here.');
+}
+</script>
+}

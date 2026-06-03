@@ -1,0 +1,260 @@
+@page
+@model EnrollmentSystemAPI.Pages.Clerk.EnrollmentReviewModel
+@{
+    ViewData["Title"]       = "Enrollment Review";
+    ViewData["TopbarTitle"] = "Enrollment Review";
+    ViewData["ClerkName"]   = Model.ClerkName;
+    Layout = "_ClerkLayout";
+}
+
+<div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+        <h1>Enrollment Review Queue</h1>
+        <p>Review enrollment forms alongside verified fee slips — approve or reject together</p>
+    </div>
+    <span style="font-size:13px;color:var(--text-secondary);margin-top:8px">
+        <strong style="color:var(--text-primary)">@Model.Enrollments.Count(e => e.Status == "Pending")</strong> pending review
+    </span>
+</div>
+
+@* ── Toolbar ──────────────────────────────────────────────── *@
+<div class="table-toolbar">
+    <div class="search-input-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" class="search-input" id="searchInput"
+               placeholder="Search student, program…" oninput="filterTable()" />
+    </div>
+    <div class="filter-tabs">
+        <button class="filter-tab active" onclick="setFilter(this,'All')">All</button>
+        <button class="filter-tab" onclick="setFilter(this,'Pending')">Pending</button>
+        <button class="filter-tab" onclick="setFilter(this,'Approved')">Approved</button>
+        <button class="filter-tab" onclick="setFilter(this,'Rejected')">Rejected</button>
+        <button class="filter-tab" onclick="setFilter(this,'FeeReview')">Needs Fee Review</button>
+    </div>
+</div>
+
+@* ── Table ────────────────────────────────────────────────── *@
+<div class="card" style="padding:0;overflow:hidden">
+    <div class="data-table-wrap">
+        <table class="data-table" id="enrollTable">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Reg No</th>
+                    <th>Program</th>
+                    <th>Courses</th>
+                    <th>Fee Status</th>
+                    <th>Form Status</th>
+                    <th>Submission Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var e in Model.Enrollments)
+                {
+                    <tr data-status="@e.Status" data-feestatus="@e.FeeStatus"
+                        data-name="@e.StudentName" data-prog="@e.Program" data-id="@e.Id">
+                        <td>
+                            <div class="td-name">@e.StudentName</div>
+                            <div class="td-muted">@e.Email</div>
+                        </td>
+                        <td class="td-mono">@e.RegistrationNo</td>
+                        <td style="max-width:130px">@e.Program</td>
+                        <td style="text-align:center">@e.CourseCount</td>
+                        <td>
+                            @if (e.FeeStatus == "Verified")
+                            { <span class="pill pill-approved">Verified</span> }
+                            else if (e.FeeStatus == "Pending")
+                            { <span class="pill pill-pending">Pending</span> }
+                            else
+                            { <span class="pill pill-rejected">Rejected</span> }
+                        </td>
+                        <td>
+                            @if (e.Status == "Pending")
+                            { <span class="pill pill-pending">Pending</span> }
+                            else if (e.Status == "Approved")
+                            { <span class="pill pill-approved">Approved</span> }
+                            else if (e.Status == "FeeReview")
+                            { <span class="pill pill-review">Needs Review</span> }
+                            else
+                            { <span class="pill pill-rejected">Rejected</span> }
+                        </td>
+                        <td>@e.SubmissionDate</td>
+                        <td>
+                            @if (e.Status == "Pending" || e.Status == "FeeReview")
+                            {
+                                <div class="action-btns">
+                                    <button class="action-btn review"
+                                            onclick="openReviewModal('@e.Id','@e.StudentName','@e.RegistrationNo','@e.Program','@e.CourseCount','@e.FeeStatus','@e.SubmissionDate')">
+                                        Review
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <span style="font-size:12px;color:var(--text-muted)">@e.ReviewedDate</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@* ── Review Modal ─────────────────────────────────────────── *@
+<div class="modal-backdrop" id="reviewModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">Enrollment Review</span>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div style="margin-bottom:16px">
+                <div class="modal-info-row"><span>Student</span><span id="rm_name"></span></div>
+                <div class="modal-info-row"><span>Registration No</span><span id="rm_reg" style="font-family:monospace"></span></div>
+                <div class="modal-info-row"><span>Program</span><span id="rm_prog"></span></div>
+                <div class="modal-info-row"><span>Courses Selected</span><span id="rm_courses"></span></div>
+                <div class="modal-info-row"><span>Fee Status</span><span id="rm_fee"></span></div>
+                <div class="modal-info-row"><span>Submission Date</span><span id="rm_date"></span></div>
+            </div>
+
+            <div class="fee-slip-viewer">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                <p>Fee slip attached with this enrollment</p>
+                <a href="#" id="rm_slipLink" target="_blank">View Fee Slip</a>
+            </div>
+
+            <div id="rm_rejectWrap" style="display:none">
+                <div class="form-group">
+                    <label class="form-label">Rejection Reason <span style="color:var(--color-danger)">*</span></label>
+                    <select id="rm_reason" class="form-control">
+                        <option value="">Select reason</option>
+                        <option>Fee slip not verified</option>
+                        <option>Incomplete course selection</option>
+                        <option>Missing supervisor (MS student)</option>
+                        <option>Incorrect student information</option>
+                        <option>Duplicate enrollment attempt</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div class="form-group" id="rm_otherWrap" style="display:none">
+                    <textarea class="form-control" id="rm_other" rows="2" placeholder="Describe issue…"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()" style="width:auto">Cancel</button>
+            <button class="btn" id="rm_rejectToggle"
+                    style="width:auto;background:#FEE2E2;color:#991B1B;border:none;min-width:110px"
+                    onclick="toggleReject()">
+                Reject
+            </button>
+            <button class="btn btn-primary" id="rm_approveBtn"
+                    style="width:auto;background:#16A34A;min-width:130px"
+                    onclick="submitReview()">
+                Approve Enrollment
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let currentId  = null;
+let rejectMode = false;
+let activeStatus = 'All';
+
+function openReviewModal(id, name, reg, prog, courses, feeStatus, date) {
+    currentId  = id; rejectMode = false;
+    document.getElementById('rm_name').textContent    = name;
+    document.getElementById('rm_reg').textContent     = reg;
+    document.getElementById('rm_prog').textContent    = prog;
+    document.getElementById('rm_courses').textContent = courses + ' courses selected';
+    document.getElementById('rm_date').textContent    = date;
+    const feeEl = document.getElementById('rm_fee');
+    feeEl.innerHTML = feeStatus === 'Verified'
+        ? '<span class="pill pill-approved">Verified</span>'
+        : '<span class="pill pill-pending">Pending Verification</span>';
+    document.getElementById('rm_rejectWrap').style.display = 'none';
+    document.getElementById('rm_rejectToggle').textContent   = 'Reject';
+    document.getElementById('rm_rejectToggle').style.background = '#FEE2E2';
+    document.getElementById('rm_rejectToggle').style.color      = '#991B1B';
+    document.getElementById('rm_approveBtn').textContent  = 'Approve Enrollment';
+    document.getElementById('rm_approveBtn').style.background = '#16A34A';
+    document.getElementById('reviewModal').classList.add('open');
+}
+
+function closeModal() {
+    document.getElementById('reviewModal').classList.remove('open');
+    currentId = null; rejectMode = false;
+}
+
+function toggleReject() {
+    rejectMode = !rejectMode;
+    document.getElementById('rm_rejectWrap').style.display = rejectMode ? 'block' : 'none';
+    const btn = document.getElementById('rm_rejectToggle');
+    btn.textContent = rejectMode ? 'Cancel' : 'Reject';
+    btn.style.background = rejectMode ? '#E5E7EB' : '#FEE2E2';
+    btn.style.color      = rejectMode ? '#374151'  : '#991B1B';
+    const aBtn = document.getElementById('rm_approveBtn');
+    aBtn.textContent = rejectMode ? 'Confirm Reject' : 'Approve Enrollment';
+    aBtn.style.background = rejectMode ? '#DC2626' : '#16A34A';
+}
+
+document.getElementById('rm_reason')?.addEventListener('change', function() {
+    document.getElementById('rm_otherWrap').style.display = this.value === 'Other' ? 'block' : 'none';
+});
+
+async function submitReview() {
+    if (!currentId) return;
+    const action = rejectMode ? 'reject' : 'approve';
+    if (rejectMode) {
+        const reason = document.getElementById('rm_reason').value;
+        if (!reason) { if(window.Toast) Toast.error('Please select a rejection reason.'); return; }
+    }
+    const btn = document.getElementById('rm_approveBtn');
+    btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span>';
+    try {
+        await fetch(`/api/enrollment/${currentId}/${action}`, { method:'POST' });
+    } catch {}
+    const row = document.querySelector(`tr[data-id="${currentId}"]`);
+    if (row) {
+        row.dataset.status = action === 'approve' ? 'Approved' : 'Rejected';
+        row.querySelector('td:nth-child(6)').innerHTML = action === 'approve'
+            ? '<span class="pill pill-approved">Approved</span>'
+            : '<span class="pill pill-rejected">Rejected</span>';
+        row.querySelector('td:nth-child(8)').innerHTML = '<span style="font-size:12px;color:var(--text-muted)">Just now</span>';
+    }
+    closeModal();
+    if(window.Toast) Toast.success(`Enrollment ${action === 'approve' ? 'approved' : 'rejected'}.`);
+}
+
+function setFilter(btn, status) {
+    activeStatus = status;
+    document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filterTable();
+}
+function filterTable() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('#enrollTable tbody tr').forEach(row => {
+        const name   = (row.dataset.name || '').toLowerCase();
+        const prog   = (row.dataset.prog || '').toLowerCase();
+        const status = row.dataset.status || '';
+        const matchSearch = name.includes(q) || prog.includes(q);
+        const matchStatus = activeStatus === 'All' || status === activeStatus;
+        row.style.display = matchSearch && matchStatus ? '' : 'none';
+    });
+}
+
+document.getElementById('reviewModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+</script>
+}
